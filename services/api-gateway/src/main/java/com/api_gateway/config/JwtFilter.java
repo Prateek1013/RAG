@@ -26,7 +26,6 @@ public class JwtFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path=exchange.getRequest().getURI().getPath();
         if (PUBLIC_PATHS.stream().anyMatch(path::startsWith)) {
-            System.out.println("reached here");
             return chain.filter(exchange);
         }
 
@@ -50,7 +49,8 @@ public class JwtFilter implements GlobalFilter, Ordered {
             // Add user info to headers
             ServerHttpRequest mutatedRequest =
                     exchange.getRequest().mutate()
-                            .header("X-User-Email", claims.getSubject())
+                            .header("X-user-id", claims.get("user_id").toString())
+                            .header("X-user-email",claims.getSubject())
                             .build();
 
             return chain.filter(
@@ -59,6 +59,7 @@ public class JwtFilter implements GlobalFilter, Ordered {
 
         } catch (Exception e) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            System.out.println("hi!, token outdated!");
             return exchange.getResponse().setComplete();
         }
     }
