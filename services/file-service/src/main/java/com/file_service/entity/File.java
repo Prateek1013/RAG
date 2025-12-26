@@ -11,11 +11,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "file")
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
 public class File {
     @Id
