@@ -1,5 +1,6 @@
 package com.file_service.entity;
 
+import com.file_service.util.enums.FileStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,6 +30,9 @@ public class File {
     private long size;
     @Column(name = "user_id", nullable = false)
     private UUID userId;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    FileStatus fileStatus;
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

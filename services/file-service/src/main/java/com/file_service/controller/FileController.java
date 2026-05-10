@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/file")
@@ -33,10 +34,17 @@ public class FileController {
     }
 
     @PostMapping("/getfile")
-    private ResponseEntity<String> getFile(@RequestParam(name = "filename") String fileName
-            , @RequestHeader("X-user-id") String user_id) throws Exception {
-        return ResponseEntity.status(HttpStatus.valueOf(200))
-                .body(fileStorageService.getFile(fileName,user_id));
-
+    public ResponseEntity<Map<String, String>> getFile(@RequestParam(name = "filename") String fileName,
+                                                       @RequestHeader("X-user-id") String user_id) {
+        try {
+            String url = fileStorageService.getFile(fileName, user_id);
+            if (url.equals("Bucket DNE!")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Bucket does not exist"));
+            }
+            return ResponseEntity.ok(Map.of("url", url));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to get file URL: " + e.getMessage()));
+        }
     }
 }

@@ -2,6 +2,8 @@ package com.file_service.service;
 
 import com.file_service.entity.File;
 import com.file_service.repository.FileRepository;
+import com.file_service.util.enums.FileStatus;
+import com.file_service.dto.FileUploadEvent;
 import io.minio.*;
 import io.minio.http.Method;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,8 @@ public class FileStorageService {
     private MinioClient minioClient;
     @Autowired
     private FileRepository fileRepository;
+    @Autowired
+    private FileEventProducer fileEventProducer;
 
     @Transactional
     public String uploadFile(MultipartFile file, String user_id) throws Exception {
@@ -32,6 +36,7 @@ public class FileStorageService {
         filentity.setSize(file.getSize());
         filentity.setUserId(UUID.fromString(user_id));
         filentity.setPath(objectName);
+        filentity.setFileStatus(FileStatus.PENDING);
         fileRepository.save(filentity);
         boolean found = minioClient.bucketExists(
                 BucketExistsArgs.builder().bucket(bucket).build());
@@ -52,6 +57,15 @@ public class FileStorageService {
                         .contentType(file.getContentType())
                         .build()
         );
+
+        FileUploadEvent event = FileUploadEvent.builder()
+                .fileId(filentity.getId())
+                .path(filentity.getPath())
+                .fileName(filentity.getFileName())
+                .userId(filentity.getUserId())
+                .build();
+        fileEventProducer.sendFileUploadEvent(event);
+
         return objectName;
     }
 
