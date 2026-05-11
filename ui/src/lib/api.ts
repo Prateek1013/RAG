@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
-// Assuming API Gateway routes
+// Routing both clients through API Gateway
 const API_URL = 'http://localhost:8081';
-const DOC_PROCESSOR_URL = 'http://localhost:8000';
+const DOC_PROCESSOR_URL = 'http://localhost:8081/api/doc';
 
 export const apiClient = axios.create({
   baseURL: API_URL,

@@ -112,14 +112,15 @@ export default function QueryPage() {
     <div className="flex flex-col h-screen overflow-hidden">
       <Navbar />
       
-      <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4 h-full relative">
-        <div className="mb-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")} className="gap-2 -ml-2 text-slate-400">
-            <ArrowLeft size={16} /> Back to Dashboard
-          </Button>
-        </div>
-
+      <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4 h-full relative min-h-0">
         <Card className="flex-1 flex flex-col min-h-0 relative mb-4">
+          {/* Header area for back button */}
+          <div className="p-3 border-b border-slate-700/50 bg-slate-900/50 rounded-t-xl shrink-0 flex items-center">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")} className="gap-2 text-slate-400 hover:text-white">
+              <ArrowLeft size={16} /> Back to Dashboard
+            </Button>
+          </div>
+
           {/* Chat History */}
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {messages.map((msg) => (

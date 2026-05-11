@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchFiles = async () => {
@@ -27,6 +28,8 @@ export default function DashboardPage() {
       setFiles(res.data);
     } catch (err) {
       console.error("Failed to fetch files", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -128,7 +131,12 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {files.length === 0 ? (
+          {loading ? (
+            <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4 text-slate-400">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+              <p>Loading your documents...</p>
+            </div>
+          ) : files.length === 0 ? (
             <div className="col-span-full py-12 text-center text-slate-500 border border-dashed border-slate-700 rounded-xl bg-slate-900/20">
               No documents found. Upload a PDF to get started!
             </div>
