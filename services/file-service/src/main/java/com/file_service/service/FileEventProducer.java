@@ -16,4 +16,9 @@ public class FileEventProducer {
     public void sendFileUploadEvent(FileUploadEvent event) {
         kafkaTemplate.send(TOPIC, event.getFileId().toString(), event);
     }
+
+    public void sendFileDeletedEvent(String fileId) {
+        // Send just the fileId as string since doc-processor will use it to delete chunks
+        kafkaTemplate.send("file-deleted-topic", fileId, fileId);
+    }
 }

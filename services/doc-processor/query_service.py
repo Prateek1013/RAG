@@ -2,7 +2,7 @@ import uuid
 from sentence_transformers import SentenceTransformer
 from sqlalchemy import select
 from groq import Groq
-from database import SessionLocal, DocumentChunk
+from database import SessionLocal, DocumentChunk, ChatMessage
 from config import GROQ_API_KEY
 
 # Initialize Embedding Model (same as used in processor.py)
@@ -41,30 +41,58 @@ def process_query(file_id: str, user_id: str, query: str) -> str:
         context_chunks = [r.content for r in results]
         context_text = "\n\n---\n\n".join(context_chunks)
         
-        # 3. Construct Prompt and Call Groq LLM
-        prompt = f"""You are an intelligent assistant. Answer the user's question based strictly on the provided context.
+        # 3. Save User Query to DB
+        user_msg = ChatMessage(
+            file_id=uuid.UUID(file_id),
+            user_id=uuid.UUID(user_id),
+            role="user",
+            content=query
+        )
+        db.add(user_msg)
+        db.commit()
+
+        # 4. Fetch Chat History
+        past_msgs = db.query(ChatMessage).filter(
+            ChatMessage.file_id == uuid.UUID(file_id),
+            ChatMessage.user_id == uuid.UUID(user_id)
+        ).order_by(ChatMessage.created_at.asc()).all()
+
+        # 5. Construct Prompt with History and Call Groq LLM
+        system_prompt = f"""You are an intelligent assistant. Answer the user's questions based strictly on the provided document context.
 
 Context:
 {context_text}
 
-Question:
-{query}
-
-Answer the question based ONLY on the context provided. If the context does not contain the answer, say "I cannot answer this based on the provided document."
+If the context does not contain the answer, say "I cannot answer this based on the provided document."
 """
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add historical messages except the last one (which is the current query)
+        for msg in past_msgs[:-1]:
+            messages.append({"role": msg.role, "content": msg.content})
+            
+        # Add the current query
+        messages.append({"role": "user", "content": query})
         
         chat_completion = groq_client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
-            model="llama3-8b-8192",
+            messages=messages,
+            model="llama-3.1-8b-instant",
             temperature=0.2, # Low temperature for more factual answers
         )
         
-        return chat_completion.choices[0].message.content
+        answer = chat_completion.choices[0].message.content
+        
+        # 6. Save Assistant Response to DB
+        assistant_msg = ChatMessage(
+            file_id=uuid.UUID(file_id),
+            user_id=uuid.UUID(user_id),
+            role="assistant",
+            content=answer
+        )
+        db.add(assistant_msg)
+        db.commit()
+        
+        return answer
         
     except Exception as e:
         print(f"Error processing query: {e}")

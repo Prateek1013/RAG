@@ -89,5 +89,14 @@ public class FileStorageService {
         );
         return url;
     }
+
+    public void deleteFile(String path) throws Exception {
+        minioClient.removeObject(
+            RemoveObjectArgs.builder()
+                .bucket(bucket)
+                .object(path)
+                .build()
+        );
+    }
 }
 
